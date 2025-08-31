@@ -31,6 +31,12 @@ class CameraTrapApp {
         this.selectionInfo = document.getElementById('selectionInfo');
         this.cancelSelection = document.getElementById('cancelSelection');
         
+        // Zoom control elements
+        this.zoomInBtn = document.getElementById('zoomInBtn');
+        this.zoomOutBtn = document.getElementById('zoomOutBtn');
+        this.zoomResetBtn = document.getElementById('zoomResetBtn');
+        this.zoomLevelDisplay = document.getElementById('zoomLevel');
+        
         // Navigation elements
         this.firstBtn = document.getElementById('firstBtn');
         this.prevBtn = document.getElementById('prevBtn');
@@ -65,6 +71,15 @@ class CameraTrapApp {
         this.isSelecting = false;
         this.selectionStart = null;
         this.currentSelection = null;
+        
+        // Zoom and pan state
+        this.zoomLevel = 1;
+        this.panX = 0;
+        this.panY = 0;
+        this.isPanning = false;
+        this.lastPanPoint = null;
+        this.minZoom = 0.1;
+        this.maxZoom = 5;
         
         // Folder browser state
         this.currentBrowserPath = null;
@@ -115,10 +130,16 @@ class CameraTrapApp {
         });
         
         // Selection events
-        this.imageWrapper.addEventListener('mousedown', (e) => this.startSelection(e));
-        this.imageWrapper.addEventListener('mousemove', (e) => this.updateSelection(e));
-        this.imageWrapper.addEventListener('mouseup', (e) => this.endSelection(e));
+        this.imageWrapper.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+        this.imageWrapper.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+        this.imageWrapper.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+        this.imageWrapper.addEventListener('wheel', (e) => this.handleWheel(e));
         this.cancelSelection.addEventListener('click', () => this.cancelIdentifyMode());
+        
+        // Zoom control events
+        this.zoomInBtn.addEventListener('click', () => this.zoomIn());
+        this.zoomOutBtn.addEventListener('click', () => this.zoomOut());
+        this.zoomResetBtn.addEventListener('click', () => this.resetZoom());
         
         // Metadata actions
         this.addFieldBtn.addEventListener('click', () => this.showAddFieldModal());
@@ -333,6 +354,9 @@ class CameraTrapApp {
                 alert(`Error loading image: ${imageData.error}`);
                 return;
             }
+            
+            // Reset zoom and pan for new image
+            this.resetZoom();
             
             // Update image display with cache busting
             const timestamp = new Date().getTime();
@@ -599,6 +623,121 @@ class CameraTrapApp {
         } catch (error) {
             this.addDebugOutput(`❌ Error extracting footer data: ${error.message}`);
         }
+    }
+    
+    // Zoom and Pan Methods
+    zoomIn() {
+        this.setZoom(this.zoomLevel * 1.2);
+    }
+    
+    zoomOut() {
+        this.setZoom(this.zoomLevel / 1.2);
+    }
+    
+    resetZoom() {
+        this.zoomLevel = 1;
+        this.panX = 0;
+        this.panY = 0;
+        this.updateImageTransform();
+        this.updateZoomDisplay();
+    }
+    
+    setZoom(newZoom) {
+        const clampedZoom = Math.max(this.minZoom, Math.min(this.maxZoom, newZoom));
+        
+        if (clampedZoom !== this.zoomLevel) {
+            this.zoomLevel = clampedZoom;
+            this.updateImageTransform();
+            this.updateZoomDisplay();
+        }
+    }
+    
+    updateImageTransform() {
+        if (this.currentImage) {
+            this.currentImage.style.transform = `translate(${this.panX}px, ${this.panY}px) scale(${this.zoomLevel})`;
+        }
+    }
+    
+    updateZoomDisplay() {
+        if (this.zoomLevelDisplay) {
+            this.zoomLevelDisplay.textContent = `${Math.round(this.zoomLevel * 100)}%`;
+        }
+    }
+    
+    handleWheel(e) {
+        if (this.isSelecting) return;
+        
+        e.preventDefault();
+        
+        const rect = this.imageWrapper.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        const newZoom = this.zoomLevel * delta;
+        
+        if (newZoom >= this.minZoom && newZoom <= this.maxZoom) {
+            // Calculate zoom center point
+            const zoomFactor = newZoom / this.zoomLevel;
+            
+            // Adjust pan to zoom towards mouse position
+            this.panX = mouseX - (mouseX - this.panX) * zoomFactor;
+            this.panY = mouseY - (mouseY - this.panY) * zoomFactor;
+            
+            this.zoomLevel = newZoom;
+            this.updateImageTransform();
+            this.updateZoomDisplay();
+        }
+    }
+    
+    handleMouseDown(e) {
+        if (this.isSelecting) {
+            this.startSelection(e);
+        } else if (this.zoomLevel > 1) {
+            this.startPanning(e);
+        }
+    }
+    
+    handleMouseMove(e) {
+        if (this.isSelecting) {
+            this.updateSelection(e);
+        } else if (this.isPanning) {
+            this.updatePanning(e);
+        }
+    }
+    
+    handleMouseUp(e) {
+        if (this.isSelecting) {
+            this.endSelection(e);
+        } else if (this.isPanning) {
+            this.endPanning(e);
+        }
+    }
+    
+    startPanning(e) {
+        this.isPanning = true;
+        this.imageWrapper.classList.add('panning');
+        this.lastPanPoint = { x: e.clientX, y: e.clientY };
+        e.preventDefault();
+    }
+    
+    updatePanning(e) {
+        if (!this.isPanning || !this.lastPanPoint) return;
+        
+        const deltaX = e.clientX - this.lastPanPoint.x;
+        const deltaY = e.clientY - this.lastPanPoint.y;
+        
+        this.panX += deltaX;
+        this.panY += deltaY;
+        
+        this.updateImageTransform();
+        this.lastPanPoint = { x: e.clientX, y: e.clientY };
+    }
+    
+    endPanning(e) {
+        this.isPanning = false;
+        this.imageWrapper.classList.remove('panning');
+        this.lastPanPoint = null;
     }
     
 
