@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2c5530">
+    <meta name="msapplication-TileColor" content="#2c5530">
+    <title>Camera Trap Metadata Editor</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Camera Trap Metadata Editor</h1>
+            <div class="folder-controls">
+                <button id="browseFolders" class="browse-btn">Browse Folders</button>
+                <span id="selectedPath" class="selected-path">No folder selected</span>
+                <button id="loadFolder" class="load-btn" disabled>Load Images</button>
+            </div>
+        </header>
+
+        <main id="mainContent" class="hidden">
+            <div class="image-section">
+                <div class="image-container">
+                    <div id="imageWrapper" class="image-wrapper">
+                        <img id="currentImage" alt="Camera trap image" />
+                        <canvas id="selectionCanvas" class="selection-canvas"></canvas>
+                        <div id="selectionBox" class="selection-box"></div>
+                    </div>
+                    <div id="imageInfo" class="image-info"></div>
+                    <div id="selectionInfo" class="selection-info hidden">
+                        <span id="selectionText">Click and drag to select an area for species identification</span>
+                        <button id="cancelSelection" class="cancel-selection">Cancel</button>
+                    </div>
+                </div>
+
+                <div class="navigation">
+                    <button id="firstBtn" class="nav-btn">First</button>
+                    <button id="prevBtn" class="nav-btn">Previous</button>
+                    <button id="nextBtn" class="nav-btn">Next</button>
+                    <button id="lastBtn" class="nav-btn">Last</button>
+                    <button id="identifyBtn" class="identify-btn">Identify Species</button>
+                    <span id="imageCounter" class="counter"></span>
+                </div>
+            </div>
+
+            <div class="metadata-section">
+                <div class="metadata-header">
+                    <h2>Image Metadata</h2>
+                    <button id="addFieldBtn" class="add-field-btn">Add Custom Field</button>
+                </div>
+
+                <div id="metadataContainer" class="metadata-container">
+                    <!-- Metadata fields will be populated here -->
+                </div>
+
+                <div class="metadata-actions">
+                    <button id="saveBtn" class="save-btn">Save Changes</button>
+                    <div class="debug-output-section">
+                        <label for="debugOutput" class="debug-label">Debug Output (Last 500 characters):</label>
+                        <textarea id="debugOutput" class="debug-output" readonly
+                            placeholder="Debug information will appear here..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="welcomeMessage" class="welcome">
+            <h2>Welcome to Camera Trap Metadata Editor</h2>
+            <p>Click "Browse Folders" above to navigate to your camera trap images folder.</p>
+            <div class="features-list">
+                <h3>Features:</h3>
+                <ul>
+                    <li>📁 Tree-based folder navigation</li>
+                    <li>🖼️ Image viewer with metadata editing</li>
+                    <li>🤖 AI-powered species identification</li>
+                    <li>⌨️ Keyboard shortcuts for quick navigation</li>
+                    <li>💾 Automatic metadata saving to sidecar files</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Folder Browser Modal -->
+    <div id="folderBrowserModal" class="modal hidden">
+        <div class="modal-content folder-browser">
+            <div class="browser-header">
+                <h3>Select Camera Trap Images Folder</h3>
+                <div class="current-path">
+                    <span id="currentPath">/</span>
+                </div>
+            </div>
+
+            <div class="browser-content">
+                <div id="folderTree" class="folder-tree">
+                    <!-- Folder tree will be populated here -->
+                </div>
+            </div>
+
+            <div class="browser-actions">
+                <button id="selectFolderBtn" class="confirm-btn" disabled>Select This Folder</button>
+                <button id="cancelBrowserBtn" class="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Field Modal -->
+    <div id="addFieldModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Add Custom Field</h3>
+            <div class="form-group">
+                <label for="fieldName">Field Name:</label>
+                <input type="text" id="fieldName" placeholder="e.g., Species, Count, Behavior" />
+            </div>
+            <div class="form-group">
+                <label for="fieldValue">Field Value:</label>
+                <input type="text" id="fieldValue" placeholder="Enter value..." />
+            </div>
+            <div class="modal-actions">
+                <button id="addFieldConfirm" class="confirm-btn">Add Field</button>
+                <button id="addFieldCancel" class="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Camera Trap Metadata Editor</h4>
+                <p>Professional tool for managing camera trap image metadata with AI-powered species identification.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Features</h4>
+                <ul>
+                    <li>Tree-based folder navigation</li>
+                    <li>AI species identification</li>
+                    <li>Metadata editing & export</li>
+                    <li>Keyboard shortcuts</li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Support</h4>
+                <p>For technical support and feature requests, please contact us at the <a
+                        href="https://github.com/anderdad/exif-metadata" target="_blank"
+                        rel="noopener noreferrer">project's repository</a> or <a href="mailto:paul.ande@outlook.com">via
+                        email</a> direct.</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Anderdad </p>
+            <p> Camera Trap Metadata Editor. Built for wildlife research and conservation.
+            </p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+
+</html>

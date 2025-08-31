@@ -1,0 +1,21 @@
+{
+    "name": "Camera Trap Metadata Editor",
+    "short_name": "CTME",
+    "description": "Professional tool for managing camera trap image metadata with AI-powered species identification",
+    "icons": [
+        {
+            "src": "/static/favicon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/static/favicon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "theme_color": "#2c5530",
+    "background_color": "#f5f5f5",
+    "display": "standalone",
+    "start_url": "/"
+}
