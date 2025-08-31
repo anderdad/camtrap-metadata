@@ -196,7 +196,7 @@ python app.py
 ```
 
 ### 2. Access the Web Interface
-Open your browser and navigate to: `http://localhost:5000`
+Open your browser and navigate to: `http://localhost:5001`
 
 ### 3. Load Your Images
 1. Click **"Browse Folders"** to open the folder navigator
